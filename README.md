@@ -9,6 +9,16 @@ It uses your Omarchy theme colors and font. Change the theme and the app follows
 
 ## Install
 
+One line, no sudo. Puts the binary in `~/.local/bin` and adds the launcher entry and icon:
+
+```
+curl -fsSL https://raw.githubusercontent.com/smanookian/markinator/main/install.sh | sh
+```
+
+Read [install.sh](install.sh) first if you like; it is short.
+
+### Build from source
+
 Needs Rust and `webkit2gtk-4.1` (already on Omarchy).
 
 ```

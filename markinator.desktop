@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=markinator
+Comment=Markdown editor and reader
+Exec=markinator %f
+Icon=markinator
+Terminal=false
+Type=Application
+Categories=Utility;TextEditor;
+MimeType=text/markdown;text/x-markdown;

@@ -1,0 +1,12 @@
+/* highlight.js theme using Omarchy colors. */
+.hljs { color: var(--foreground); background: var(--lighter-background); }
+.hljs-comment, .hljs-quote { color: var(--dark-foreground); font-style: italic; }
+.hljs-keyword, .hljs-selector-tag, .hljs-literal, .hljs-doctag, .hljs-meta { color: var(--magenta); }
+.hljs-string, .hljs-regexp, .hljs-addition, .hljs-attribute { color: var(--green); }
+.hljs-number, .hljs-symbol, .hljs-bullet, .hljs-link { color: var(--orange); }
+.hljs-title, .hljs-section, .hljs-name, .hljs-selector-id, .hljs-selector-class { color: var(--blue); }
+.hljs-type, .hljs-built_in, .hljs-class .hljs-title { color: var(--yellow); }
+.hljs-variable, .hljs-template-variable, .hljs-attr, .hljs-params { color: var(--cyan); }
+.hljs-deletion { color: var(--red); }
+.hljs-emphasis { font-style: italic; }
+.hljs-strong { font-weight: bold; }

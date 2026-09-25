@@ -1,6 +1,6 @@
 # Maintainer: Stepan Manookian <stepan@manookian.de>
 pkgname=markinator
-pkgver=0.1.0
+pkgver=0.1.1
 pkgrel=1
 pkgdesc="Markdown editor and reader for Omarchy"
 arch=('x86_64')

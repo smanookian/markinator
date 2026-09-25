@@ -61,6 +61,7 @@ html, body {
   overflow-y: auto;
   line-height: 1.6;
 }
+#view:focus { outline: 0; }
 #view > :first-child { margin-top: 0; }
 #view.empty { color: var(--muted); }
 

@@ -73,7 +73,7 @@ In edit mode, `Tab` inserts two spaces.
 - If the file changes on disk and you have no unsaved edits, it reloads.
 - Opening more files while markinator runs adds windows to the same app. This uses less memory.
 - The status line shows the word count. Markdown marks like `#` or `-` are not counted.
-- Window size is remembered. Nothing else is.
+- Window size is remembered, and where you were in each file (last 100 files).
 - Window class is `markinator`, for Hyprland window rules.
 
 ## License

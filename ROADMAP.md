@@ -33,7 +33,7 @@ Only add what is really missed after using v1.
 - Done: search in file (`Ctrl+F`).
 - Syntax colors in edit mode (headings, bold, code). Needs a small editor library like CodeMirror.
 - Export to HTML / PDF.
-- Remember scroll position per file.
+- Done: remember scroll position per file.
 - Recent files list.
 - Done: word count in the status line.
 

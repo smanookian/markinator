@@ -118,6 +118,7 @@ async function setMode(m) {
     editor.hidden = true;
     view.hidden = false;
     setScrollRatio(view, ratio);
+    view.focus(); // so arrow keys, Page Down and Space scroll the page
   } else {
     view.hidden = true;
     editor.hidden = false;
@@ -127,6 +128,7 @@ async function setMode(m) {
   if (!search.hidden) {
     findHits();
     showHit(0);
+    searchInput.focus();
   }
 }
 
@@ -134,9 +136,43 @@ function toggleMode() {
   setMode(mode === "edit" ? "view" : "edit");
 }
 
+// --- scroll memory ---
+// Remembers where you were in each file (as a 0..1 ratio), for the last
+// 100 files. Kept in the webview's local storage, shared by all windows.
+
+const SCROLL_KEY = "scroll";
+const SCROLL_MAX = 100;
+
+function loadScrolls() {
+  try {
+    return JSON.parse(localStorage.getItem(SCROLL_KEY)) || {};
+  } catch {
+    return {};
+  }
+}
+
+function saveScroll() {
+  if (!path) return;
+  const all = loadScrolls();
+  delete all[path]; // re-add so it becomes the newest
+  all[path] = scrollRatio(mode === "edit" ? editor : view);
+  const keys = Object.keys(all);
+  for (const k of keys.slice(0, Math.max(0, keys.length - SCROLL_MAX))) delete all[k];
+  localStorage.setItem(SCROLL_KEY, JSON.stringify(all));
+}
+
+let scrollTimer = null;
+function saveScrollSoon() {
+  clearTimeout(scrollTimer);
+  scrollTimer = setTimeout(saveScroll, 500);
+}
+editor.addEventListener("scroll", saveScrollSoon);
+view.addEventListener("scroll", saveScrollSoon);
+
 // --- files ---
 
 async function loadPath(p, startMode) {
+  saveScroll();
   let loaded;
   try {
     loaded = await invoke("load_file", { path: p });
@@ -155,6 +191,8 @@ async function loadPath(p, startMode) {
     await setMode("edit");
   } else {
     await setMode(startMode);
+    const ratio = path && loadScrolls()[path];
+    if (ratio) setScrollRatio(mode === "edit" ? editor : view, ratio);
   }
 }
 
@@ -214,6 +252,7 @@ async function open() {
 
 async function newDoc() {
   if (!(await confirmDiscard())) return;
+  saveScroll();
   path = null;
   editor.value = "";
   updateWords();
@@ -224,7 +263,9 @@ async function newDoc() {
 }
 
 async function quit() {
-  if (await confirmDiscard()) win.destroy();
+  if (!(await confirmDiscard())) return;
+  saveScroll();
+  win.destroy();
 }
 
 // --- links in view mode ---
@@ -390,7 +431,7 @@ function closeSearch() {
   hits = [];
   editHit = null;
   placeHitBox();
-  if (mode === "edit") editor.focus();
+  (mode === "edit" ? editor : view).focus();
 }
 
 searchInput.addEventListener("input", () => {

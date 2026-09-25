@@ -119,3 +119,37 @@ html, body {
 #status-mode { color: var(--accent); font-weight: bold; }
 #status-msg { color: var(--yellow); }
 #status-hint { margin-left: auto; color: var(--dark-foreground); }
+
+/* Search box (Ctrl+F) */
+#search {
+  position: fixed;
+  top: 0.6rem; right: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  padding: 0.3em 0.6em;
+  font-size: 0.9em;
+  background: var(--lighter-background);
+  border: 1px solid var(--muted);
+  border-radius: 4px;
+}
+#search-input {
+  width: 16em;
+  padding: 0.2em 0.4em;
+  border: 0;
+  outline: 0;
+  font: inherit;
+  background: var(--background);
+  color: var(--foreground);
+  caret-color: var(--accent);
+}
+#search-count { min-width: 3em; color: var(--dark-foreground); }
+#view mark.hit { background: var(--selection); color: inherit; border-radius: 2px; }
+#view mark.current { background: var(--yellow); color: var(--background); }
+#edit-hit {
+  position: fixed;
+  pointer-events: none;
+  background: var(--yellow);
+  opacity: 0.35;
+  border-radius: 2px;
+}

@@ -21,14 +21,16 @@ built-in web engine), about 2 GB total.
 - Done: one app, many windows. Opening another `.md` file adds a window to the
   running app instead of starting a new copy. Measured: first window about 230 MB,
   each extra window about 100 MB (before: about 200 MB each).
-- Turn off unused web engine parts (the app never goes online). Small win.
-- Free the rendered page when a window is in the background. Small win.
+- Checked, not worth it: turn off unused web engine parts. The network process
+  is about 26 MB, only one for all windows, and WebKit needs it for local files too.
+- Checked, not worth it: free the rendered page when a window is in the background.
+  Most of the ~100 MB per window is the empty web engine, not the note.
 
 ## Ideas for v2
 
 Only add what is really missed after using v1.
 
-- Search in file (`Ctrl+F`).
+- Done: search in file (`Ctrl+F`).
 - Syntax colors in edit mode (headings, bold, code). Needs a small editor library like CodeMirror.
 - Export to HTML / PDF.
 - Remember scroll position per file.

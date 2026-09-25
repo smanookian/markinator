@@ -61,7 +61,8 @@ markinator --help        # show options and keys
 | `Ctrl+S` | Save |
 | `Ctrl+Shift+S` | Save as |
 | `Ctrl+N` | New document |
-| `Ctrl+Q` | Quit |
+| `Ctrl+F` | Find (`Enter` next, `Shift+Enter` back, `Esc` close) |
+| `Ctrl+Q` | Close window |
 | `Ctrl++` / `Ctrl+-` / `Ctrl+0` | Zoom in / out / reset |
 
 In edit mode, `Tab` inserts two spaces.

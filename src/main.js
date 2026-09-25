@@ -96,6 +96,7 @@ async function renderView() {
   view.classList.remove("empty");
   view.innerHTML = await invoke("render", { text });
   fixLinks();
+  if (!search.hidden) findHits();
 }
 
 async function setMode(m) {
@@ -113,6 +114,10 @@ async function setMode(m) {
     editor.hidden = false;
     setScrollRatio(editor, ratio);
     editor.focus();
+  }
+  if (!search.hidden) {
+    findHits();
+    showHit(0);
   }
 }
 
@@ -238,6 +243,162 @@ function setZoom(z) {
   webview.setZoom(zoom);
 }
 
+// --- search (Ctrl+F) ---
+
+const search = document.getElementById("search");
+const searchInput = document.getElementById("search-input");
+const searchCount = document.getElementById("search-count");
+let hits = []; // edit mode: [start, end] pairs. View mode: <mark> elements.
+let hit = -1;
+
+// Lower case for case-insensitive search. Keeps the text as is when lower
+// casing would change its length, so positions stay right.
+function fold(s) {
+  const low = s.toLowerCase();
+  return low.length === s.length ? low : s;
+}
+
+function clearMarks() {
+  for (const m of view.querySelectorAll("mark.hit")) {
+    const parent = m.parentNode;
+    parent.replaceChild(document.createTextNode(m.textContent), m);
+    parent.normalize();
+  }
+}
+
+function findHits() {
+  clearMarks();
+  hits = [];
+  hit = -1;
+  const q = fold(searchInput.value);
+  if (q) {
+    if (mode === "edit") {
+      const text = fold(editor.value);
+      for (let i = text.indexOf(q); i !== -1; i = text.indexOf(q, i + q.length)) {
+        hits.push([i, i + q.length]);
+      }
+    } else {
+      const walker = document.createTreeWalker(view, NodeFilter.SHOW_TEXT);
+      const nodes = [];
+      while (walker.nextNode()) nodes.push(walker.currentNode);
+      for (let node of nodes) {
+        for (let i = fold(node.data).indexOf(q); i !== -1; i = fold(node.data).indexOf(q)) {
+          const found = node.splitText(i);
+          node = found.splitText(q.length);
+          const mark = document.createElement("mark");
+          mark.className = "hit";
+          found.replaceWith(mark);
+          mark.append(found);
+          hits.push(mark);
+        }
+      }
+    }
+  }
+  searchCount.textContent = searchInput.value ? `0/${hits.length}` : "";
+  editHit = null;
+  placeHitBox();
+}
+
+// Where the text from `start` to `end` sits inside the editor, with the same
+// wrapping. The textarea does not scroll to its selection by itself, and does
+// not show the selection while the search box has focus, so we measure it.
+function measureInEditor(start, end) {
+  const css = getComputedStyle(editor);
+  const mirror = document.createElement("div");
+  for (const p of ["padding", "font", "lineHeight", "whiteSpace", "overflowWrap", "letterSpacing", "tabSize"]) {
+    mirror.style[p] = css[p];
+  }
+  mirror.style.boxSizing = "border-box";
+  mirror.style.width = editor.clientWidth + "px";
+  mirror.style.position = "absolute";
+  mirror.style.visibility = "hidden";
+  mirror.style.top = "0";
+  mirror.textContent = editor.value.slice(0, start);
+  const span = document.createElement("span");
+  span.textContent = editor.value.slice(start, end);
+  mirror.append(span);
+  document.body.append(mirror);
+  const box = { top: span.offsetTop, left: span.offsetLeft, width: span.offsetWidth, height: span.offsetHeight };
+  mirror.remove();
+  return box;
+}
+
+// Highlight box over the current match in edit mode.
+const hitBox = document.getElementById("edit-hit");
+let editHit = null;
+
+function placeHitBox() {
+  if (!editHit || mode !== "edit" || search.hidden) {
+    hitBox.hidden = true;
+    return;
+  }
+  hitBox.hidden = false;
+  hitBox.style.top = editHit.top - editor.scrollTop + "px";
+  hitBox.style.left = editHit.left + "px";
+  hitBox.style.width = editHit.width + "px";
+  hitBox.style.height = editHit.height + "px";
+}
+
+editor.addEventListener("scroll", placeHitBox);
+editor.addEventListener("input", () => {
+  editHit = null;
+  placeHitBox();
+});
+
+function showHit(n) {
+  if (hits.length === 0) return;
+  hit = (n + hits.length) % hits.length;
+  searchCount.textContent = `${hit + 1}/${hits.length}`;
+  if (mode === "edit") {
+    const [start, end] = hits[hit];
+    editor.setSelectionRange(start, end);
+    editHit = measureInEditor(start, end);
+    editor.scrollTop = editHit.top - editor.clientHeight / 2;
+    placeHitBox();
+  } else {
+    view.querySelector("mark.current")?.classList.remove("current");
+    hits[hit].classList.add("current");
+    hits[hit].scrollIntoView({ block: "center" });
+  }
+}
+
+function openSearch() {
+  search.hidden = false;
+  searchInput.focus();
+  searchInput.select();
+  if (searchInput.value) {
+    findHits();
+    showHit(0);
+  }
+}
+
+function closeSearch() {
+  search.hidden = true;
+  clearMarks();
+  hits = [];
+  editHit = null;
+  placeHitBox();
+  if (mode === "edit") editor.focus();
+}
+
+searchInput.addEventListener("input", () => {
+  findHits();
+  showHit(0);
+});
+
+searchInput.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    e.preventDefault();
+    closeSearch();
+  } else if (e.key === "Enter") {
+    e.preventDefault();
+    const next = hit + (e.shiftKey ? -1 : 1);
+    // The text may have changed since the last search in edit mode.
+    if (mode === "edit") findHits();
+    showHit(next);
+  }
+});
+
 window.addEventListener("keydown", (e) => {
   showStatus();
   if (!e.ctrlKey) {
@@ -258,6 +419,7 @@ window.addEventListener("keydown", (e) => {
   else if (key === "+" || key === "=") setZoom(zoom + 0.1);
   else if (key === "-") setZoom(zoom - 0.1);
   else if (key === "0") setZoom(1);
+  else if (key === "f") openSearch();
   else handled = false;
   if (handled) e.preventDefault();
 });

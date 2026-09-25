@@ -8,6 +8,8 @@ Edit / view toggle, Omarchy theme, open / save, GitHub release.
 
 - Upload to AUR (when registrations reopen), so users can `yay -S markinator`.
 - Add to stevinator.com/apps.
+- Done: command line flags `--version`, `--help`, `--edit`.
+- Terminal view (`markinator -t file.md`), like glow. See notes below.
 
 ## Use less resources
 
@@ -32,3 +34,14 @@ Only add what is really missed after using v1.
 - Remember scroll position per file.
 - Recent files list.
 - Word count in the status line.
+
+## Notes: terminal view (`-t`)
+
+Possible. Two ways:
+
+- Easy: `-t` runs `glow` if it is installed. Few lines, but needs glow.
+- Own: turn markdown into colored terminal text in Rust (headings, bold, lists,
+  code, quotes, links). A few hundred lines, no new app needed. Tables and images
+  are harder in a terminal. Can use the Omarchy colors too.
+
+Read only. Editing in the terminal would be a second editor, too much for now.

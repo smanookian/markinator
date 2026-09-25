@@ -3,19 +3,66 @@
 mod files;
 mod theme;
 
+use serde::Serialize;
 use tauri::{Emitter, Manager, WindowEvent};
-use tauri_plugin_cli::CliExt;
 use tauri_plugin_dialog::{DialogExt, MessageDialogButtons, MessageDialogKind, MessageDialogResult};
 
-// File given on the command line, if any.
-struct StartFile(Option<String>);
+const HELP: &str = "\
+markinator - markdown editor and reader
+
+Usage: markinator [options] [file]
+
+Options:
+  -e, --edit      start in edit mode (default is view mode when a file is given)
+  -h, --help      show this help
+  -V, --version   show the version
+
+Keys: Ctrl+E toggle edit/view, Ctrl+O open, Ctrl+S save, Ctrl+Q quit.
+";
+
+// What the command line asked for.
+#[derive(Serialize, Clone, Default)]
+struct Start {
+    file: Option<String>,
+    edit: bool,
+}
+
+// Read the command line. Prints and exits for --help, --version and bad input.
+fn parse_args() -> Start {
+    let mut start = Start::default();
+    let mut flags_done = false;
+    for arg in std::env::args().skip(1) {
+        match arg.as_str() {
+            "--" if !flags_done => flags_done = true,
+            "-h" | "--help" if !flags_done => {
+                print!("{HELP}");
+                std::process::exit(0);
+            }
+            "-V" | "--version" if !flags_done => {
+                println!("markinator {}", env!("CARGO_PKG_VERSION"));
+                std::process::exit(0);
+            }
+            "-e" | "--edit" if !flags_done => start.edit = true,
+            a if a.starts_with('-') && a.len() > 1 && !flags_done => {
+                eprintln!("markinator: unknown option {a}\nTry: markinator --help");
+                std::process::exit(2);
+            }
+            _ if start.file.is_none() => start.file = Some(arg),
+            _ => {
+                eprintln!("markinator: only one file can be opened\nTry: markinator --help");
+                std::process::exit(2);
+            }
+        }
+    }
+    start
+}
 
 // Keeps the theme watcher alive for the whole run.
 struct ThemeWatch(#[allow(dead_code)] Option<notify::RecommendedWatcher>);
 
 #[tauri::command]
-fn start_file(state: tauri::State<StartFile>) -> Option<String> {
-    state.0.clone()
+fn start(state: tauri::State<Start>) -> Start {
+    state.inner().clone()
 }
 
 #[tauri::command]
@@ -62,19 +109,14 @@ fn show_error(app: tauri::AppHandle, text: String) {
 }
 
 fn main() {
+    let args = parse_args();
     tauri::Builder::default()
-        .plugin(tauri_plugin_cli::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_window_state::Builder::new().build())
         .manage(files::FileWatch::new())
+        .manage(args)
         .setup(|app| {
-            let file = app
-                .cli()
-                .matches()
-                .ok()
-                .and_then(|m| m.args.get("file").and_then(|a| a.value.as_str().map(String::from)));
-            app.manage(StartFile(file));
             app.manage(ThemeWatch(theme::watch(app.handle().clone())));
             Ok(())
         })
@@ -86,7 +128,7 @@ fn main() {
             }
         })
         .invoke_handler(tauri::generate_handler![
-            start_file,
+            start,
             theme,
             ask_save,
             show_error,

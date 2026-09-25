@@ -45,8 +45,11 @@ Note: on Hyprland, `xdg-open` asks `file` for the type, and `file` calls `.md` f
 ## Use
 
 ```
-markinator            # empty document
-markinator notes.md   # open a file (starts in view mode)
+markinator               # empty document
+markinator notes.md      # open a file (starts in view mode)
+markinator -e notes.md   # open a file in edit mode
+markinator --version     # show the version
+markinator --help        # show options and keys
 ```
 
 ## Keys

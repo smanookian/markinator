@@ -280,8 +280,8 @@ listen("close-requested", quit);
 
 (async () => {
   applyTheme(await invoke("theme"));
-  const start = await invoke("start_file");
-  if (start) await loadPath(start, "view");
+  const start = await invoke("start");
+  if (start.file) await loadPath(start.file, start.edit ? "edit" : "view");
   else await setMode("edit");
   updateTitle();
   showStatus();

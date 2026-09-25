@@ -11,7 +11,6 @@
     "core:window:allow-show",
     "core:webview:allow-set-webview-zoom",
     "dialog:default",
-    "cli:default",
     "window-state:default",
     "opener:default"
   ]

@@ -27,14 +27,6 @@
       }
     }
   },
-  "plugins": {
-    "cli": {
-      "description": "Markdown editor and reader",
-      "args": [
-        { "name": "file", "index": 1, "takesValue": true }
-      ]
-    }
-  },
   "bundle": {
     "active": false,
     "icon": ["icons/icon.png"]

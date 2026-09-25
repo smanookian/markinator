@@ -18,9 +18,9 @@ built-in web engine), about 2 GB total.
 
 - Done: fixed idle CPU. The theme watcher reacted to file reads, so the windows
   kept waking each other up (about 90% of one core with 11 windows).
-- One app, many windows: opening another `.md` file adds a window to the running
-  app instead of starting a new copy. Windows share one web engine. Saves about
-  half the memory per extra window.
+- Done: one app, many windows. Opening another `.md` file adds a window to the
+  running app instead of starting a new copy. Measured: first window about 230 MB,
+  each extra window about 100 MB (before: about 200 MB each).
 - Turn off unused web engine parts (the app never goes online). Small win.
 - Free the rendered page when a window is in the background. Small win.
 

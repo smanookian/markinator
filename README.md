@@ -70,6 +70,7 @@ In edit mode, `Tab` inserts two spaces.
 
 - Links to `http(s)://` open in your browser. Links to `.md` files open in the same window.
 - If the file changes on disk and you have no unsaved edits, it reloads.
+- Opening more files while markinator runs adds windows to the same app. This uses less memory.
 - Window size is remembered. Nothing else is.
 - Window class is `markinator`, for Hyprland window rules.
 

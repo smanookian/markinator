@@ -1,7 +1,6 @@
 // markinator frontend. One textarea, one view, a few keys.
 
 const { invoke, convertFileSrc } = window.__TAURI__.core;
-const { listen } = window.__TAURI__.event;
 const dialog = window.__TAURI__.dialog;
 const opener = window.__TAURI__.opener;
 const win = window.__TAURI__.window.getCurrentWindow();
@@ -271,12 +270,12 @@ window.addEventListener("error", (e) => message(e.message));
 // --- start ---
 
 let reloadTimer = null;
-listen("file-changed", () => {
+win.listen("file-changed", () => {
   clearTimeout(reloadTimer);
   reloadTimer = setTimeout(reloadFromDisk, 150);
 });
-listen("theme", (ev) => applyTheme(ev.payload));
-listen("close-requested", quit);
+win.listen("theme", (ev) => applyTheme(ev.payload));
+win.listen("close-requested", quit);
 
 (async () => {
   applyTheme(await invoke("theme"));

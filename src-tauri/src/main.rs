@@ -3,7 +3,10 @@
 mod files;
 mod theme;
 
+use parking_lot::Mutex;
 use serde::Serialize;
+use std::collections::HashMap;
+use std::path::Path;
 use tauri::{Emitter, Manager, WindowEvent};
 use tauri_plugin_dialog::{DialogExt, MessageDialogButtons, MessageDialogKind, MessageDialogResult};
 
@@ -28,10 +31,10 @@ struct Start {
 }
 
 // Read the command line. Prints and exits for --help, --version and bad input.
-fn parse_args() -> Start {
+fn parse_args(args: impl Iterator<Item = String>) -> Start {
     let mut start = Start::default();
     let mut flags_done = false;
-    for arg in std::env::args().skip(1) {
+    for arg in args {
         match arg.as_str() {
             "--" if !flags_done => flags_done = true,
             "-h" | "--help" if !flags_done => {
@@ -60,9 +63,31 @@ fn parse_args() -> Start {
 // Keeps the theme watcher alive for the whole run.
 struct ThemeWatch(#[allow(dead_code)] Option<notify::RecommendedWatcher>);
 
+// What each window should open at start, by window label.
+struct Starts(Mutex<HashMap<String, Start>>);
+
 #[tauri::command]
-fn start(state: tauri::State<Start>) -> Start {
-    state.inner().clone()
+fn start(window: tauri::Window, starts: tauri::State<Starts>) -> Start {
+    starts.0.lock().remove(window.label()).unwrap_or_default()
+}
+
+// Open a new window for `start`. Labels are reused ("main", "w2", "w3", ...)
+// so the saved window size stays per slot and does not grow forever.
+fn open_window(app: &tauri::AppHandle, start: Start) {
+    let label = std::iter::once("main".to_string())
+        .chain((2..).map(|n| format!("w{n}")))
+        .find(|l| app.get_webview_window(l).is_none())
+        .unwrap_or_default();
+    app.state::<Starts>().0.lock().insert(label.clone(), start);
+    let built = tauri::WebviewWindowBuilder::new(app, &label, tauri::WebviewUrl::default())
+        .title("Untitled - markinator")
+        .inner_size(900.0, 700.0)
+        .decorations(false)
+        .visible(false)
+        .build();
+    if let Err(e) = built {
+        eprintln!("markinator: cannot open window: {e}");
+    }
 }
 
 #[tauri::command]
@@ -109,23 +134,35 @@ fn show_error(app: tauri::AppHandle, text: String) {
 }
 
 fn main() {
-    let args = parse_args();
+    let first = parse_args(std::env::args().skip(1));
     tauri::Builder::default()
+        // A second `markinator file.md` hands the file to the running app
+        // and exits. The running app opens it in a new window.
+        .plugin(tauri_plugin_single_instance::init(|app, argv, cwd| {
+            let mut start = parse_args(argv.into_iter().skip(1));
+            start.file = start.file.map(|f| Path::new(&cwd).join(f).to_string_lossy().into_owned());
+            open_window(app, start);
+        }))
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_window_state::Builder::new().build())
         .manage(files::FileWatch::new())
-        .manage(args)
-        .setup(|app| {
+        .manage(Starts(Mutex::new(HashMap::new())))
+        .setup(move |app| {
             app.manage(ThemeWatch(theme::watch(app.handle().clone())));
+            open_window(app.handle(), first);
             Ok(())
         })
-        .on_window_event(|window, event| {
+        .on_window_event(|window, event| match event {
             // The frontend decides if closing is ok (unsaved changes).
-            if let WindowEvent::CloseRequested { api, .. } = event {
+            WindowEvent::CloseRequested { api, .. } => {
                 api.prevent_close();
-                let _ = window.emit("close-requested", ());
+                let _ = window.emit_to(window.label(), "close-requested", ());
             }
+            WindowEvent::Destroyed => {
+                window.state::<files::FileWatch>().forget(window.label());
+            }
+            _ => {}
         })
         .invoke_handler(tauri::generate_handler![
             start,

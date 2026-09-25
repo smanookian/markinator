@@ -9,7 +9,7 @@ license=('MIT')
 depends=('webkit2gtk-4.1' 'gtk3' 'fontconfig')
 makedepends=('cargo')
 source=("$pkgname-$pkgver.tar.gz::$url/archive/v$pkgver.tar.gz")
-sha256sums=('c48a610b04e143a768bc8266dd0b80525363b13eff2d6e762c61c2c7afca117b')
+sha256sums=('9cf73d39093006e8e3e396a53d8fa775e39b872b031c448b3025af68e700b92a')
 
 build() {
   cd "$srcdir/$pkgname-$pkgver/src-tauri"

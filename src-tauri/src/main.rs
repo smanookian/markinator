@@ -15,7 +15,7 @@ Usage: markinator [options] [file]
 Options:
   -e, --edit      start in edit mode (default is view mode when a file is given)
   -h, --help      show this help
-  -V, --version   show the version
+  -v, --version   show the version (-V works too)
 
 Keys: Ctrl+E toggle edit/view, Ctrl+O open, Ctrl+S save, Ctrl+Q quit.
 ";
@@ -38,7 +38,7 @@ fn parse_args() -> Start {
                 print!("{HELP}");
                 std::process::exit(0);
             }
-            "-V" | "--version" if !flags_done => {
+            "-v" | "-V" | "--version" if !flags_done => {
                 println!("markinator {}", env!("CARGO_PKG_VERSION"));
                 std::process::exit(0);
             }

@@ -8,7 +8,7 @@ Edit / view toggle, Omarchy theme, open / save, GitHub release.
 
 - Upload to AUR (when registrations reopen), so users can `yay -S markinator`.
 - Add to stevinator.com/apps.
-- Done: command line flags `--version`, `--help`, `--edit`.
+- Done (v0.1.2): command line flags `--version` (`-v`), `--help`, `--edit`.
 - Terminal view (`markinator -t file.md`), like glow. See notes below.
 
 ## Use less resources

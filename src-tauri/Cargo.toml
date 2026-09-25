@@ -1,6 +1,6 @@
 [package]
 name = "markinator"
-version = "0.1.1"
+version = "0.1.2"
 description = "Markdown editor and reader"
 license = "MIT"
 edition = "2021"

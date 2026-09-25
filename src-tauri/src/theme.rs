@@ -102,15 +102,20 @@ pub fn current() -> Theme {
     }
 }
 
-// Watch the Omarchy "current" dir (the theme symlink lives there) and the
-// theme dir itself. Any change means: re-read colors and emit "theme".
+// Watch the Omarchy "current" dir (the theme dir lives there) and the
+// theme dir itself. Only a real change to colors.toml, or the theme dir
+// being replaced, means: re-read colors and emit "theme".
+// Reads (open / access) are ignored. Reacting to them made every window
+// re-read colors.toml, which woke all the other windows, in a loop.
 // The caller keeps the returned watcher alive.
 pub fn watch(app: AppHandle) -> Option<notify::RecommendedWatcher> {
     let dir = omarchy_dir()?;
     let mut watcher = notify::recommended_watcher(move |res: notify::Result<notify::Event>| {
-        if res.is_ok() {
-            let _ = app.emit("theme", current());
+        let Ok(ev) = res else { return };
+        if !is_theme_change(&ev) {
+            return;
         }
+        let _ = app.emit("theme", current());
     })
     .ok()?;
     let _ = watcher.watch(&dir, RecursiveMode::NonRecursive);
@@ -118,4 +123,17 @@ pub fn watch(app: AppHandle) -> Option<notify::RecommendedWatcher> {
         let _ = watcher.watch(&theme_dir, RecursiveMode::NonRecursive);
     }
     Some(watcher)
+}
+
+fn is_theme_change(ev: &notify::Event) -> bool {
+    use notify::event::{EventKind, ModifyKind};
+    let real = matches!(
+        ev.kind,
+        EventKind::Create(_)
+            | EventKind::Remove(_)
+            | EventKind::Modify(ModifyKind::Data(_) | ModifyKind::Name(_) | ModifyKind::Any)
+    );
+    real && ev.paths.iter().any(|p| {
+        matches!(p.file_name().and_then(|n| n.to_str()), Some("colors.toml" | "theme"))
+    })
 }

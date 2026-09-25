@@ -117,6 +117,7 @@ html, body {
   color: var(--light-foreground);
 }
 #status-mode { color: var(--accent); font-weight: bold; }
+#status-words { color: var(--dark-foreground); }
 #status-msg { color: var(--yellow); }
 #status-hint { margin-left: auto; color: var(--dark-foreground); }
 

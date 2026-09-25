@@ -12,6 +12,7 @@ const status = document.getElementById("status");
 const statusMode = document.getElementById("status-mode");
 const statusFile = document.getElementById("status-file");
 const statusMsg = document.getElementById("status-msg");
+const statusWords = document.getElementById("status-words");
 
 const FILTERS = [{ name: "Markdown", extensions: ["md", "markdown", "txt"] }];
 
@@ -51,6 +52,14 @@ function showStatus() {
 function message(text) {
   statusMsg.textContent = text;
   showStatus();
+}
+
+// A word is a run of non-space text with at least one letter or digit,
+// so markdown marks like "#", "-" or "---" are not counted.
+let wordsTimer = null;
+function updateWords() {
+  const n = (editor.value.match(/\S*[\p{L}\p{N}]\S*/gu) || []).length;
+  statusWords.textContent = n === 1 ? "1 word" : `${n} words`;
 }
 
 // --- theme ---
@@ -137,6 +146,7 @@ async function loadPath(p, startMode) {
   }
   path = loaded ? loaded.path : null;
   editor.value = loaded ? loaded.text : "";
+  updateWords();
   setDirty(false);
   updateTitle();
   invoke("watch_file", { path: loaded && loaded.exists ? path : null });
@@ -159,6 +169,7 @@ async function reloadFromDisk() {
   if (!loaded.exists || loaded.text === editor.value) return;
   const ratio = scrollRatio(mode === "edit" ? editor : view);
   editor.value = loaded.text;
+  updateWords();
   if (mode === "view") {
     await renderView();
     setScrollRatio(view, ratio);
@@ -205,6 +216,7 @@ async function newDoc() {
   if (!(await confirmDiscard())) return;
   path = null;
   editor.value = "";
+  updateWords();
   setDirty(false);
   updateTitle();
   invoke("watch_file", { path: null });
@@ -425,7 +437,12 @@ window.addEventListener("keydown", (e) => {
 });
 
 window.addEventListener("mousemove", showStatus);
-editor.addEventListener("input", () => setDirty(true));
+editor.addEventListener("input", () => {
+  setDirty(true);
+  // Wait for a short pause in typing, so big files stay fast.
+  clearTimeout(wordsTimer);
+  wordsTimer = setTimeout(updateWords, 300);
+});
 window.addEventListener("unhandledrejection", (e) => message(String(e.reason)));
 window.addEventListener("error", (e) => message(e.message));
 

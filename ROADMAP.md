@@ -35,7 +35,7 @@ Only add what is really missed after using v1.
 - Export to HTML / PDF.
 - Remember scroll position per file.
 - Recent files list.
-- Word count in the status line.
+- Done: word count in the status line.
 
 ## Notes: terminal view (`-t`)
 

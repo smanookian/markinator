@@ -62,6 +62,118 @@ function updateWords() {
   statusWords.textContent = n === 1 ? "1 word" : `${n} words`;
 }
 
+// --- colors in edit mode ---
+// Builds a colored copy of the text into #colors, which lies on top of the
+// textarea. Line by line, with a few simple rules. Not a full markdown parser:
+// a wrong color now and then is fine, the text itself is never changed.
+
+const editWrap = document.getElementById("edit");
+const colors = document.getElementById("colors");
+const colorsText = document.getElementById("colors-text");
+const COLOR_LIMIT = 200000; // bigger files stay plain, so typing stays fast
+
+function esc(s) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function span(cls, s) {
+  return `<span class="md-${cls}">${esc(s)}</span>`;
+}
+
+// `code`, **bold**, __bold__, ~~strike~~, *italic*, _italic_, [link](url), ![img](src), bare urls
+const INLINE = /(`+)[^`]+?\1|\*\*[^*\n]+?\*\*|__[^_\n]+?__|~~[^~\n]+?~~|\*[^*\s][^*\n]*?\*|\b_[^_\s][^_\n]*?_\b|!?\[[^\]\n]*\]\([^)\n]*\)|https?:\/\/[^\s<>)]+/g;
+
+function inline(text) {
+  let out = "";
+  let last = 0;
+  for (const m of text.matchAll(INLINE)) {
+    const t = m[0];
+    out += esc(text.slice(last, m.index));
+    if (t[0] === "`") out += span("code", t);
+    else if (t.startsWith("**") || t.startsWith("__")) out += span("bold", t);
+    else if (t.startsWith("~~")) out += span("strike", t);
+    else if (t[0] === "*" || t[0] === "_") out += span("italic", t);
+    else if (t[0] === "[" || t[0] === "!") {
+      const i = t.indexOf("](") + 1;
+      out += span("link", t.slice(0, i)) + span("url", t.slice(i));
+    } else out += span("link", t);
+    last = m.index + t.length;
+  }
+  return out + esc(text.slice(last));
+}
+
+// One line. `state.fence` is true inside a ``` code block.
+function colorLine(l, state) {
+  if (/^\s*(```|~~~)/.test(l)) {
+    state.fence = !state.fence;
+    return span("fence", l);
+  }
+  if (state.fence) return span("code", l);
+  if (/^#{1,6}\s/.test(l)) return span("heading", l);
+  if (/^\s*([-*_])(\s*\1){2,}\s*$/.test(l)) return span("rule", l);
+  if (/^\s*>/.test(l)) return span("quote", l);
+  const m = l.match(/^(\s*)([-*+]|\d+[.)])(\s+)(\[[ xX]\]\s)?/);
+  if (m) {
+    return esc(m[1]) + span("list", m[2]) + esc(m[3]) + (m[4] ? span("list", m[4]) : "") + inline(l.slice(m[0].length));
+  }
+  if (/^\s*\|/.test(l)) return inline(l).replace(/\|/g, '<span class="md-rule">|</span>');
+  return inline(l);
+}
+
+function paint() {
+  const plain = editor.value.length > COLOR_LIMIT;
+  editWrap.classList.toggle("plain", plain);
+  if (plain) {
+    colorsText.textContent = "";
+    return;
+  }
+  const state = { fence: false };
+  // The extra space keeps a last empty line, like the textarea shows it.
+  colorsText.innerHTML = editor.value.split("\n").map((l) => colorLine(l, state)).join("\n") + " ";
+  fitColors();
+}
+
+// Same size as the textarea without its scrollbar, and moved up by its scroll.
+function fitColors() {
+  colors.style.width = editor.clientWidth + "px";
+  colors.style.height = editor.clientHeight + "px";
+  slideColors();
+}
+
+function slideColors() {
+  colorsText.style.transform = `translateY(${-editor.scrollTop}px)`;
+}
+
+editor.addEventListener("scroll", slideColors);
+new ResizeObserver(fitColors).observe(editor);
+
+// Keep the caret in sight, with one line of space, after typing or moving.
+// WebKit's own scrolling sometimes leaves it just below the edge.
+// The colored copy has the same layout, so the caret's line is found there.
+function revealCaret() {
+  if (editWrap.hidden || editWrap.classList.contains("plain")) return;
+  slideColors();
+  const pos = editor.selectionDirection === "backward" ? editor.selectionStart : editor.selectionEnd;
+  // The colored copy has one extra space at the end, so a character always follows pos.
+  const walker = document.createTreeWalker(colorsText, NodeFilter.SHOW_TEXT);
+  let left = pos;
+  let node;
+  while ((node = walker.nextNode()) && left >= node.length) left -= node.length;
+  if (!node) return;
+  const range = document.createRange();
+  range.setStart(node, left);
+  range.setEnd(node, left + 1);
+  const line = range.getBoundingClientRect();
+  const box = editor.getBoundingClientRect();
+  const pad = parseFloat(getComputedStyle(editor).paddingTop);
+  if (line.bottom > box.bottom - pad) editor.scrollTop += line.bottom - (box.bottom - pad);
+  else if (line.top < box.top + pad) editor.scrollTop -= box.top + pad - line.top;
+  slideColors();
+}
+
+// After WebKit has done its own scrolling for this key.
+editor.addEventListener("keyup", () => requestAnimationFrame(revealCaret));
+
 // --- theme ---
 
 function applyTheme(t) {
@@ -115,13 +227,13 @@ async function setMode(m) {
   statusMode.textContent = m.toUpperCase();
   if (m === "view") {
     await renderView();
-    editor.hidden = true;
+    editWrap.hidden = true;
     view.hidden = false;
     setScrollRatio(view, ratio);
     view.focus(); // so arrow keys, Page Down and Space scroll the page
   } else {
     view.hidden = true;
-    editor.hidden = false;
+    editWrap.hidden = false;
     setScrollRatio(editor, ratio);
     editor.focus();
   }
@@ -183,6 +295,7 @@ async function loadPath(p, startMode) {
   path = loaded ? loaded.path : null;
   editor.value = loaded ? loaded.text : "";
   updateWords();
+  paint();
   setDirty(false);
   updateTitle();
   invoke("watch_file", { path: loaded && loaded.exists ? path : null });
@@ -208,6 +321,7 @@ async function reloadFromDisk() {
   const ratio = scrollRatio(mode === "edit" ? editor : view);
   editor.value = loaded.text;
   updateWords();
+  paint();
   if (mode === "view") {
     await renderView();
     setScrollRatio(view, ratio);
@@ -256,6 +370,7 @@ async function newDoc() {
   path = null;
   editor.value = "";
   updateWords();
+  paint();
   setDirty(false);
   updateTitle();
   invoke("watch_file", { path: null });
@@ -458,6 +573,7 @@ window.addEventListener("keydown", (e) => {
     if (e.key === "Tab" && e.target === editor) {
       e.preventDefault();
       editor.setRangeText("  ", editor.selectionStart, editor.selectionEnd, "end");
+      paint();
       setDirty(true);
     }
     return;
@@ -479,6 +595,8 @@ window.addEventListener("keydown", (e) => {
 
 window.addEventListener("mousemove", showStatus);
 editor.addEventListener("input", () => {
+  paint(); // right away: the textarea letters are invisible
+  requestAnimationFrame(revealCaret);
   setDirty(true);
   // Wait for a short pause in typing, so big files stay fast.
   clearTimeout(wordsTimer);

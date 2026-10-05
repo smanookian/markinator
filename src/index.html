@@ -7,7 +7,10 @@
   <link rel="stylesheet" href="vendor/highlight.css">
 </head>
 <body>
-  <textarea id="editor" spellcheck="false" autofocus></textarea>
+  <div id="edit">
+    <textarea id="editor" spellcheck="false" autofocus></textarea>
+    <div id="colors" aria-hidden="true"><pre id="colors-text"></pre></div>
+  </div>
   <div id="view" tabindex="-1" hidden></div>
   <div id="edit-hit" hidden></div>
   <div id="search" hidden>

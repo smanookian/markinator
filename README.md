@@ -72,6 +72,7 @@ In edit mode, `Tab` inserts two spaces.
 - Links to `http(s)://` open in your browser. Links to `.md` files open in the same window.
 - If the file changes on disk and you have no unsaved edits, it reloads.
 - Opening more files while markinator runs adds windows to the same app. This uses less memory.
+- Edit mode colors markdown (headings, lists, bold, code, links). Files over 200 KB stay plain, so typing stays fast.
 - The status line shows the word count. Markdown marks like `#` or `-` are not counted.
 - Window size is remembered, and where you were in each file (last 100 files).
 - Window class is `markinator`, for Hyprland window rules.

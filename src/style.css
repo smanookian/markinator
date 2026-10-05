@@ -35,24 +35,52 @@ html, body {
 
 ::selection { background: var(--selection); }
 
-/* Edit mode */
+/* Edit mode. The textarea text is invisible; #colors lies on top of it and
+   shows the same text with markdown colors. Only colors change, never size
+   or weight, so the caret stays in line with the letters.
+   #colors is a fixed window over the textarea; #colors-text slides inside it
+   by the textarea's scroll amount. */
+#edit { position: relative; height: 100%; }
+#editor, #colors-text {
+  margin: 0;
+  padding: 1.5rem;
+  border: 0;
+  font: inherit;
+  line-height: 1.6; /* 24px at 15px: whole pixels, so both layers round the same */
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
 #editor {
   display: block;
   width: 100%;
   height: 100%;
-  margin: 0;
-  padding: 1.5rem;
-  border: 0;
   outline: 0;
   resize: none;
   background: var(--background);
-  color: var(--foreground);
+  color: transparent;
   caret-color: var(--accent);
-  font: inherit;
-  line-height: 1.5;
-  white-space: pre-wrap;
-  overflow-wrap: break-word;
 }
+#colors {
+  position: absolute;
+  top: 0; left: 0;
+  overflow: hidden;
+  pointer-events: none;
+  color: var(--foreground);
+}
+#colors-text { will-change: transform; }
+/* Big files: no colors, plain text box. */
+#edit.plain #editor { color: var(--foreground); }
+#edit.plain #colors { display: none; }
+
+.md-heading { color: var(--accent); }
+.md-list { color: var(--yellow); }
+.md-quote { color: var(--cyan); }
+.md-code { color: var(--green); }
+.md-bold { color: var(--orange); }
+.md-italic { color: var(--magenta); }
+.md-link { color: var(--blue); }
+.md-fence, .md-rule, .md-url { color: var(--dark-foreground); }
+.md-strike { color: var(--dark-foreground); text-decoration: line-through; }
 
 /* View mode */
 #view {

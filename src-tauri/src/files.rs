@@ -44,6 +44,12 @@ pub fn save_file(path: String, text: String) -> Result<String, String> {
     Ok(abs.to_string_lossy().into_owned())
 }
 
+// For the recent files list: which of these files still exist.
+#[tauri::command]
+pub fn files_exist(paths: Vec<String>) -> Vec<bool> {
+    paths.iter().map(|p| Path::new(p).is_file()).collect()
+}
+
 #[tauri::command]
 pub fn render(text: String) -> String {
     let opts = Options::ENABLE_TABLES

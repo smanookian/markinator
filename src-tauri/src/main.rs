@@ -21,7 +21,7 @@ Options:
   -v, --version   show the version (-V works too)
 
 Keys: Ctrl+E toggle edit/view, Ctrl+F find, Ctrl+O open, Ctrl+S save,
-      Ctrl+P print / PDF, Ctrl+Shift+E export HTML, Ctrl+Q close.
+      Ctrl+R recent files, Ctrl+P print / PDF, Ctrl+Shift+E export HTML, Ctrl+Q close.
 ";
 
 // What the command line asked for.
@@ -174,6 +174,7 @@ fn main() {
             files::save_file,
             files::render,
             files::watch_file,
+            files::files_exist,
         ])
         .run(tauri::generate_context!())
         .expect("failed to run markinator");

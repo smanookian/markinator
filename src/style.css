@@ -150,6 +150,32 @@ html, body {
 #status-msg { color: var(--yellow); }
 #status-hint { margin-left: auto; color: var(--dark-foreground); }
 
+/* Recent files list (Ctrl+R) */
+#recent {
+  position: fixed;
+  top: 3rem; left: 50%;
+  transform: translateX(-50%);
+  width: min(40rem, 90vw);
+  padding: 0.4em;
+  font-size: 0.9em;
+  background: var(--lighter-background);
+  border: 1px solid var(--muted);
+  border-radius: 4px;
+  outline: 0;
+}
+#recent-title { padding: 0.2em 0.6em 0.4em; color: var(--dark-foreground); }
+#recent-list { list-style: none; margin: 0; padding: 0; }
+#recent-list li {
+  display: flex;
+  gap: 1em;
+  padding: 0.3em 0.6em;
+  border-radius: 3px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+#recent-list li.pick { background: var(--selection); }
+#recent-list .dir { color: var(--dark-foreground); overflow: hidden; text-overflow: ellipsis; }
+
 /* Search box (Ctrl+F) */
 #search {
   position: fixed;
@@ -203,7 +229,7 @@ html, body {
     --magenta: #8e24aa !important;
   }
   html, body { height: auto; overflow: visible; }
-  #edit, #status, #search, #edit-hit { display: none !important; }
+  #edit, #status, #search, #edit-hit, #recent { display: none !important; }
   #view { display: block !important; height: auto; overflow: visible; padding: 0; }
   #view.empty { display: none !important; }
   #view mark.hit { background: none; color: inherit; }

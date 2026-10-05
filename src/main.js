@@ -299,6 +299,7 @@ async function loadPath(p, startMode) {
   setDirty(false);
   updateTitle();
   invoke("watch_file", { path: loaded && loaded.exists ? path : null });
+  if (loaded && loaded.exists) addRecent(path);
   if (loaded && !loaded.exists) {
     message("New file");
     await setMode("edit");
@@ -346,6 +347,7 @@ async function save(as) {
   setDirty(false);
   updateTitle();
   invoke("watch_file", { path });
+  addRecent(path);
   message("Saved");
   return true;
 }
@@ -407,6 +409,84 @@ async function confirmDiscard() {
   if (r === "save") return save(false);
   return r === "discard";
 }
+
+// --- recent files (Ctrl+R) ---
+// The last 10 files opened or saved, newest first. Kept in local storage,
+// shared by all windows, like the scroll memory.
+
+const RECENT_KEY = "recent";
+const RECENT_MAX = 10;
+const recent = document.getElementById("recent");
+const recentList = document.getElementById("recent-list");
+let recentFiles = [];
+let recentPick = 0;
+
+function loadRecent() {
+  try {
+    return JSON.parse(localStorage.getItem(RECENT_KEY)) || [];
+  } catch {
+    return [];
+  }
+}
+
+function addRecent(p) {
+  const list = [p, ...loadRecent().filter((x) => x !== p)].slice(0, RECENT_MAX);
+  localStorage.setItem(RECENT_KEY, JSON.stringify(list));
+}
+
+function markPick() {
+  for (const [i, li] of [...recentList.children].entries()) li.classList.toggle("pick", i === recentPick);
+}
+
+async function openRecent() {
+  // Leave out the file in this window and files that are gone.
+  const all = loadRecent().filter((p) => p !== path);
+  const exists = await invoke("files_exist", { paths: all });
+  recentFiles = all.filter((_, i) => exists[i]);
+  if (recentFiles.length === 0) {
+    message("No recent files");
+    return;
+  }
+  recentList.replaceChildren(
+    ...recentFiles.map((p, i) => {
+      const li = document.createElement("li");
+      const name = document.createElement("span");
+      const dir = document.createElement("span");
+      name.textContent = p.slice(p.lastIndexOf("/") + 1);
+      dir.textContent = p.slice(0, p.lastIndexOf("/"));
+      dir.className = "dir";
+      li.append(name, dir);
+      li.addEventListener("click", () => pickRecent(i));
+      return li;
+    }),
+  );
+  recentPick = 0;
+  markPick();
+  recent.hidden = false;
+  recent.focus();
+}
+
+function closeRecent() {
+  recent.hidden = true;
+  (mode === "edit" ? editor : view).focus();
+}
+
+async function pickRecent(i) {
+  closeRecent();
+  if (!(await confirmDiscard())) return;
+  await loadPath(recentFiles[i], "view");
+}
+
+recent.addEventListener("keydown", (e) => {
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+    const step = e.key === "ArrowDown" ? 1 : -1;
+    recentPick = (recentPick + step + recentFiles.length) % recentFiles.length;
+    markPick();
+  } else if (e.key === "Enter") pickRecent(recentPick);
+  else if (e.key === "Escape") closeRecent();
+  else return;
+  e.preventDefault();
+});
 
 async function open() {
   if (!(await confirmDiscard())) return;
@@ -641,6 +721,7 @@ window.addEventListener("keydown", (e) => {
   else if (key === "-") setZoom(zoom - 0.1);
   else if (key === "0") setZoom(1);
   else if (key === "f") openSearch();
+  else if (key === "r") (recent.hidden ? openRecent() : closeRecent());
   else handled = false;
   if (handled) e.preventDefault();
 });

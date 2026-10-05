@@ -1,6 +1,6 @@
 pkgbase = markinator
 	pkgdesc = Markdown editor and reader for Omarchy
-	pkgver = 0.1.5
+	pkgver = 0.1.6
 	pkgrel = 1
 	url = https://github.com/smanookian/markinator
 	arch = x86_64
@@ -9,7 +9,7 @@ pkgbase = markinator
 	depends = webkit2gtk-4.1
 	depends = gtk3
 	depends = fontconfig
-	source = markinator-0.1.5.tar.gz::https://github.com/smanookian/markinator/archive/v0.1.5.tar.gz
-	sha256sums = b7a0229db82194f1881fe7f3b1517210079d1ee44e5a2b6344f9a81278373342
+	source = markinator-0.1.6.tar.gz::https://github.com/smanookian/markinator/archive/v0.1.6.tar.gz
+	sha256sums = b79cb856a96b1f3061cc6df296691ac090999b989dd4fc79663bbb30f695bb59
 
 pkgname = markinator

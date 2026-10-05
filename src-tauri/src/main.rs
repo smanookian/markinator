@@ -20,7 +20,8 @@ Options:
   -h, --help      show this help
   -v, --version   show the version (-V works too)
 
-Keys: Ctrl+E toggle edit/view, Ctrl+F find, Ctrl+O open, Ctrl+S save, Ctrl+Q close.
+Keys: Ctrl+E toggle edit/view, Ctrl+F find, Ctrl+O open, Ctrl+S save,
+      Ctrl+P print / PDF, Ctrl+Shift+E export HTML, Ctrl+Q close.
 ";
 
 // What the command line asked for.

@@ -33,7 +33,7 @@ Only add what is really missed after using v1.
 - Done: search in file (`Ctrl+F`).
 - Done: syntax colors in edit mode (headings, lists, bold, italic, code, links, quotes).
   No library: a colored copy of the text lies on top of the plain textarea.
-- Export to HTML / PDF.
+- Done: export to HTML (`Ctrl+Shift+E`) and print / PDF (`Ctrl+P`).
 - Done: remember scroll position per file.
 - Recent files list.
 - Done: word count in the status line.

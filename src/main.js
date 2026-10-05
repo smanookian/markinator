@@ -350,6 +350,56 @@ async function save(as) {
   return true;
 }
 
+// --- export ---
+
+// One standalone HTML file that looks like view mode: same CSS, the current
+// theme colors, highlighted code. Images keep their relative paths, so they
+// show when the file sits next to the note.
+async function buildHtml() {
+  const body = document.createElement("div");
+  body.innerHTML = await invoke("render", { text: editor.value });
+  for (const code of body.querySelectorAll("pre code")) hljs.highlightElement(code);
+  const files = await Promise.all(["style.css", "vendor/highlight.css"].map((f) => fetch(f).then((r) => r.text())));
+  const root = document.documentElement.style;
+  const vars = [...root].filter((p) => p.startsWith("--")).map((p) => `${p}: ${root.getPropertyValue(p)};`).join(" ");
+  const title = fileName().replace(/\.(md|markdown|txt)$/i, "");
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>${esc(title)}</title>
+<style>
+${files.join("\n")}
+:root { ${vars} }
+html, body { height: auto; overflow: auto; }
+#view { height: auto; max-width: 50rem; margin: 0 auto; }
+</style>
+</head>
+<body><div id="view">${body.innerHTML}</div></body>
+</html>
+`;
+}
+
+async function exportHtml() {
+  const base = path ? path.replace(/\.(md|markdown|txt)$/i, "") : `${dirName() || ""}/Untitled`.replace(/^\//, "");
+  const target = await dialog.save({ filters: [{ name: "HTML", extensions: ["html"] }], defaultPath: `${base}.html` });
+  if (!target) return;
+  try {
+    await invoke("save_file", { path: target, text: await buildHtml() });
+  } catch (e) {
+    await invoke("show_error", { text: String(e) });
+    return;
+  }
+  message("Exported");
+}
+
+// Print or save as PDF ("Print to File" in the dialog). Prints the rendered
+// page; the print colors are in style.css (@media print).
+async function printPage() {
+  if (mode === "edit") await setMode("view");
+  window.print();
+}
+
 // Ask about unsaved changes. Returns true when it is ok to go on.
 async function confirmDiscard() {
   if (!dirty) return true;
@@ -580,7 +630,9 @@ window.addEventListener("keydown", (e) => {
   }
   const key = e.key.toLowerCase();
   let handled = true;
-  if (key === "e") toggleMode();
+  if (key === "e" && e.shiftKey) exportHtml();
+  else if (key === "e") toggleMode();
+  else if (key === "p") printPage();
   else if (key === "o") open();
   else if (key === "s") save(e.shiftKey);
   else if (key === "n") newDoc();

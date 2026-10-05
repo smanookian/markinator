@@ -183,3 +183,31 @@ html, body {
   opacity: 0.35;
   border-radius: 2px;
 }
+
+/* Print and PDF: light colors on white, only the rendered page. */
+@media print {
+  :root {
+    --background: #fff !important;
+    --lighter-background: #f2f2f2 !important;
+    --foreground: #1a1a1a !important;
+    --light-foreground: #444 !important;
+    --dark-foreground: #666 !important;
+    --muted: #bbb !important;
+    --accent: #1f5fa8 !important;
+    --blue: #1f5fa8 !important;
+    --red: #b3261e !important;
+    --green: #2e7d32 !important;
+    --yellow: #8a6d00 !important;
+    --orange: #b45309 !important;
+    --cyan: #00796b !important;
+    --magenta: #8e24aa !important;
+  }
+  html, body { height: auto; overflow: visible; }
+  #edit, #status, #search, #edit-hit { display: none !important; }
+  #view { display: block !important; height: auto; overflow: visible; padding: 0; }
+  #view.empty { display: none !important; }
+  #view mark.hit { background: none; color: inherit; }
+  #view pre { white-space: pre-wrap; }
+  #view h1, #view h2, #view h3 { break-after: avoid; }
+  #view pre, #view table, #view img { break-inside: avoid; }
+}

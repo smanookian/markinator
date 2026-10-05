@@ -61,6 +61,8 @@ markinator --help        # show options and keys
 | `Ctrl+S` | Save |
 | `Ctrl+Shift+S` | Save as |
 | `Ctrl+N` | New document |
+| `Ctrl+P` | Print, or save as PDF ("Print to File") |
+| `Ctrl+Shift+E` | Export as HTML |
 | `Ctrl+F` | Find (`Enter` next, `Shift+Enter` back, `Esc` close) |
 | `Ctrl+Q` | Close window |
 | `Ctrl++` / `Ctrl+-` / `Ctrl+0` | Zoom in / out / reset |

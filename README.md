@@ -7,6 +7,16 @@ Press `Ctrl+E` again. Back to writing.
 
 It uses your Omarchy theme colors and font. Change the theme and the app follows, no restart.
 
+## Features
+
+- Edit and view in one window. `Ctrl+E` switches.
+- Your Omarchy theme colors and font, updated live when the theme changes.
+- Markdown colors while you write (headings, lists, bold, code, links).
+- Find in the file, word count, recent files.
+- Export to HTML. Print, or save as PDF.
+- Remembers where you were in each file.
+- Many files open as windows of one app, so it stays light on memory.
+
 ## Install
 
 One line, no sudo. Puts the binary in `~/.local/bin` and adds the launcher entry and icon:

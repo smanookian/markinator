@@ -171,8 +171,12 @@ function revealCaret() {
   slideColors();
 }
 
-// After WebKit has done its own scrolling for this key.
-editor.addEventListener("keyup", () => requestAnimationFrame(revealCaret));
+// After WebKit has done its own scrolling for this key. Not for shortcuts
+// (Ctrl+E must keep the place) or for a lone Shift, Ctrl or Alt.
+editor.addEventListener("keyup", (e) => {
+  if (e.ctrlKey || e.altKey || ["Control", "Shift", "Alt", "Meta"].includes(e.key)) return;
+  requestAnimationFrame(revealCaret);
+});
 
 // --- theme ---
 
@@ -230,12 +234,13 @@ async function setMode(m) {
     editWrap.hidden = true;
     view.hidden = false;
     setScrollRatio(view, ratio);
-    view.focus(); // so arrow keys, Page Down and Space scroll the page
+    view.focus({ preventScroll: true }); // so arrow keys, Page Down and Space scroll the page
   } else {
     view.hidden = true;
     editWrap.hidden = false;
     setScrollRatio(editor, ratio);
-    editor.focus();
+    // Without preventScroll, WebKit jumps to the caret and the place is lost.
+    editor.focus({ preventScroll: true });
   }
   if (!search.hidden) {
     findHits();
@@ -294,6 +299,7 @@ async function loadPath(p, startMode) {
   }
   path = loaded ? loaded.path : null;
   editor.value = loaded ? loaded.text : "";
+  editor.setSelectionRange(0, 0); // caret at the top, not at the end
   updateWords();
   paint();
   setDirty(false);
@@ -320,13 +326,13 @@ async function reloadFromDisk() {
   }
   if (!loaded.exists || loaded.text === editor.value) return;
   const ratio = scrollRatio(mode === "edit" ? editor : view);
+  const [start, end] = [editor.selectionStart, editor.selectionEnd];
   editor.value = loaded.text;
+  editor.setSelectionRange(Math.min(start, editor.value.length), Math.min(end, editor.value.length));
   updateWords();
   paint();
-  if (mode === "view") {
-    await renderView();
-    setScrollRatio(view, ratio);
-  }
+  if (mode === "view") await renderView();
+  setScrollRatio(mode === "edit" ? editor : view, ratio);
 }
 
 async function save(as) {
@@ -468,7 +474,7 @@ async function openRecent() {
 
 function closeRecent() {
   recent.hidden = true;
-  (mode === "edit" ? editor : view).focus();
+  (mode === "edit" ? editor : view).focus({ preventScroll: true });
 }
 
 async function pickRecent(i) {
